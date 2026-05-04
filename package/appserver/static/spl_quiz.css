@@ -1,0 +1,708 @@
+/* SPL Quiz — scoped under #spl-quiz-root / #spl-quiz-edit-root (Splunk chrome excluded)
+ * Negative margins plus parent overflow:hidden clip content so only title/description show.
+ *
+ * Selector pitfall: `#spl-quiz-root, #spl-quiz-edit-root .foo` parses as
+ * `#spl-quiz-root` alone AND `#spl-quiz-edit-root .foo`.
+ * To style `.foo` under both roots use `#spl-quiz-root .foo, #spl-quiz-edit-root .foo`. */
+
+/* Enterprise: hide lingering .preload "Loading…" shell once JS adds body class */
+body.spl-quiz-preload-dismissed .preload {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+#spl-quiz-root, #spl-quiz-edit-root {
+  /* Splunk Enterprise-like: dark bg, muted text, green accent (avoid pastel) */
+  --sl-bg: #1a1c1f;
+  --sl-surface: #24282e;
+  --sl-border: #3d4450;
+  --sl-text: #e4e7ec;
+  --sl-muted: #9aa3b0;
+  --sl-accent: #6db33f;
+  --sl-accent-hover: #5a9e32;
+  --sl-editor-bg: #121418;
+  --sl-editor-fg: #d1d8e0;
+  --sl-code-bg: #2f3540;
+  --sl-ok: #8fd99c;
+  --sl-ok-bg: #15251a;
+  --sl-ng: #e89898;
+  --sl-ng-bg: #2a1a1a;
+  --sl-warn-bg: #2a2618;
+  --sl-warn-border: #5a4d2a;
+  --sl-warn-fg: #d4c4a0;
+
+  box-sizing: border-box;
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--sl-text);
+  background: var(--sl-bg);
+  margin: 0;
+  padding: 1.25rem 1rem 2rem;
+  max-width: 1200px;
+  min-height: 280px;
+  overflow: visible;
+  position: relative;
+  /* Stack above transparent Splunk HTML panel wrapper to receive clicks */
+  z-index: 200;
+  pointer-events: auto;
+  cursor: default;
+  width: 100%;
+  /* Mitigate fixed-height parent + overflow:hidden clipping content */
+  overflow: visible !important;
+  max-height: none !important;
+  min-height: min(72vh, 920px);
+}
+
+#spl-quiz-root *,
+#spl-quiz-edit-root *,
+#spl-quiz-root *::before,
+#spl-quiz-edit-root *::before,
+#spl-quiz-root *::after,
+#spl-quiz-edit-root *::after {
+  box-sizing: border-box;
+}
+
+/* Shown only before JS loads (replaced by buildUi) */
+#spl-quiz-root .sl-bootstrap-hint, #spl-quiz-edit-root .sl-bootstrap-hint {
+  padding: 0.75rem 1rem;
+  background: var(--sl-warn-bg);
+  border: 1px solid var(--sl-warn-border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+#spl-quiz-root .sl-bootstrap-hint ul, #spl-quiz-edit-root .sl-bootstrap-hint ul {
+  margin: 0.5rem 0 0 1.1rem;
+  padding: 0;
+}
+
+#spl-quiz-root .sl-header, #spl-quiz-edit-root .sl-header {
+  margin-bottom: 1rem;
+}
+
+#spl-quiz-root .sl-header-row, #spl-quiz-edit-root .sl-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+#spl-quiz-root .sl-header h1, #spl-quiz-edit-root .sl-header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.spl-quiz-js-loading {
+  margin: 0;
+  padding: 0.75rem 0;
+  font-size: 0.875rem;
+  color: var(--sl-muted, #64748b);
+}
+
+#spl-quiz-root .sl-header-actions, #spl-quiz-edit-root .sl-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#spl-quiz-root .sl-banner, #spl-quiz-edit-root .sl-banner {
+  display: none;
+  margin-bottom: 1rem;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  border: 1px solid var(--sl-warn-border);
+  background: var(--sl-warn-bg);
+  color: var(--sl-warn-fg);
+}
+
+#spl-quiz-root .sl-banner.visible, #spl-quiz-edit-root .sl-banner.visible {
+  display: block;
+}
+
+#spl-quiz-root .sl-banner-kv-ok, #spl-quiz-edit-root .sl-banner-kv-ok {
+  border-color: #3d5a28;
+  background: #1a2515;
+  color: #a3d97a;
+}
+
+/* Info banners (empty lookup/list): match .sl-index-hint tone; avoid blown-out code */
+#spl-quiz-root .sl-banner-kv-file, #spl-quiz-edit-root .sl-banner-kv-file {
+  border-color: var(--sl-border);
+  background: #1e2228;
+  color: var(--sl-muted);
+}
+
+#spl-quiz-root .sl-banner-kv-warn, #spl-quiz-edit-root .sl-banner-kv-warn {
+  border-color: #5c3838;
+  background: #251818;
+  color: #e0a0a0;
+}
+
+/* code inside green banner (avoid default Splunk white code bg) */
+#spl-quiz-root .sl-banner-kv-ok code,
+#spl-quiz-edit-root .sl-banner-kv-ok code {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: #d4f0b8 !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(163, 217, 122, 0.35);
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  box-shadow: none !important;
+}
+
+#spl-quiz-root .sl-banner-kv-file code,
+#spl-quiz-edit-root .sl-banner-kv-file code {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--sl-editor-fg) !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(157, 165, 176, 0.35);
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  box-shadow: none !important;
+}
+
+#spl-quiz-root .sl-banner-kv-warn code,
+#spl-quiz-edit-root .sl-banner-kv-warn code {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: #f0c4c4 !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(224, 160, 160, 0.35);
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  box-shadow: none !important;
+}
+
+#spl-quiz-root .sl-badge, #spl-quiz-edit-root .sl-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #2c323a;
+  color: #c5cdd8;
+  margin-right: 0.5rem;
+}
+
+#spl-quiz-root .sl-grid, #spl-quiz-edit-root .sl-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 960px) {
+  #spl-quiz-root .sl-grid-main, #spl-quiz-edit-root .sl-grid-main {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+#spl-quiz-root .sl-panel, #spl-quiz-edit-root .sl-panel {
+  background: var(--sl-surface);
+  border: 1px solid var(--sl-border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+#spl-quiz-root .sl-panel-head, #spl-quiz-edit-root .sl-panel-head {
+  padding: 0.65rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sl-muted);
+  border-bottom: 1px solid var(--sl-border);
+  background: linear-gradient(180deg, #2c3138 0%, #252a31 100%);
+}
+
+#spl-quiz-root .sl-panel-body, #spl-quiz-edit-root .sl-panel-body {
+  padding: 1rem;
+}
+
+#spl-quiz-root .sl-statement, #spl-quiz-edit-root .sl-statement {
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+/* code inside statement/hint (override default Splunk white code box) */
+#spl-quiz-root .sl-problem-body code,
+#spl-quiz-edit-root .sl-problem-body code,
+#spl-quiz-root .sl-hint code,
+#spl-quiz-edit-root .sl-hint code {
+  font-size: 0.9em;
+  background: var(--sl-code-bg) !important;
+  color: var(--sl-editor-fg) !important;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  border: 1px solid var(--sl-border);
+}
+
+#spl-quiz-root .sl-problem-body, #spl-quiz-edit-root .sl-problem-body {
+  margin-top: 0.35rem;
+}
+
+#spl-quiz-root .sl-index-hint, #spl-quiz-edit-root .sl-index-hint {
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--sl-muted);
+  background: #1e2228;
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+}
+
+#spl-quiz-root .sl-index-hint-label, #spl-quiz-edit-root .sl-index-hint-label {
+  color: var(--sl-muted);
+}
+
+/* Extract sample box (like index line); rex line uses .sl-mono-spl accent */
+#spl-quiz-root .sl-extract-sample,
+#spl-quiz-edit-root .sl-extract-sample {
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--sl-muted);
+  background: #1e2228;
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+}
+
+/* Inline inside extract sample (prefer span over code vs Splunk defaults) */
+#spl-quiz-root .sl-extract-sample .sl-extract-inline,
+#spl-quiz-edit-root .sl-extract-sample .sl-extract-inline {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--sl-editor-fg);
+  background: transparent !important;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+}
+
+/* Compat: old statement markup with code still contained in box */
+#spl-quiz-root #sl-statement .sl-extract-sample .sl-extract-sample-text code,
+#spl-quiz-edit-root .sl-statement .sl-extract-sample .sl-extract-sample-text code,
+#spl-quiz-root .sl-problem-body .sl-extract-sample .sl-extract-sample-text code,
+#spl-quiz-edit-root .sl-problem-body .sl-extract-sample .sl-extract-sample-text code {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace !important;
+  font-size: 0.9em !important;
+  font-weight: 500 !important;
+  color: var(--sl-editor-fg) !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* index=… / one rex line — wrap long SPL */
+#spl-quiz-root .sl-mono-spl,
+#spl-quiz-edit-root .sl-mono-spl {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  color: var(--sl-accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+#spl-quiz-root .sl-extract-sample .sl-mono-spl,
+#spl-quiz-edit-root .sl-extract-sample .sl-mono-spl {
+  display: block;
+  margin-top: 0.35rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#spl-quiz-root .sl-field, #spl-quiz-edit-root .sl-field {
+  margin-bottom: 0.75rem;
+}
+
+#spl-quiz-root .sl-field label, #spl-quiz-edit-root .sl-field label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sl-muted);
+  margin-bottom: 0.35rem;
+}
+
+#spl-quiz-root select.sl-select, #spl-quiz-edit-root select.sl-select {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  background: #1e2228;
+  color: var(--sl-text);
+}
+
+#spl-quiz-root textarea.sl-spl, #spl-quiz-edit-root textarea.sl-spl {
+  width: 100%;
+  min-height: 140px;
+  padding: 0.65rem 0.75rem;
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+  resize: vertical;
+  background: var(--sl-editor-bg);
+  color: var(--sl-editor-fg);
+}
+
+/* Prevent Splunk parent styles from washing out placeholders */
+#spl-quiz-root textarea.sl-spl::placeholder,
+#spl-quiz-edit-root textarea.sl-spl::placeholder {
+  color: var(--sl-muted) !important;
+  opacity: 1;
+}
+#spl-quiz-root textarea.sl-spl::-webkit-input-placeholder,
+#spl-quiz-edit-root textarea.sl-spl::-webkit-input-placeholder {
+  color: var(--sl-muted) !important;
+  -webkit-text-fill-color: var(--sl-muted);
+}
+#spl-quiz-root textarea.sl-spl::-moz-placeholder,
+#spl-quiz-edit-root textarea.sl-spl::-moz-placeholder {
+  color: var(--sl-muted) !important;
+  opacity: 1;
+}
+
+#spl-quiz-root .sl-actions, #spl-quiz-edit-root .sl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+#spl-quiz-root button.sl-btn,
+#spl-quiz-edit-root button.sl-btn,
+#spl-quiz-root label.sl-btn.sl-file-label,
+#spl-quiz-edit-root label.sl-btn.sl-file-label {
+  cursor: pointer;
+  border: 1px solid var(--sl-border);
+  background: #2a3038;
+  color: var(--sl-text);
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+#spl-quiz-root button.sl-btn:hover,
+#spl-quiz-edit-root button.sl-btn:hover,
+#spl-quiz-root label.sl-btn.sl-file-label:hover,
+#spl-quiz-edit-root label.sl-btn.sl-file-label:hover {
+  border-color: #4a5568;
+  background: #323842;
+}
+
+#spl-quiz-root button.sl-btn-primary, #spl-quiz-edit-root button.sl-btn-primary {
+  background: var(--sl-accent);
+  border-color: var(--sl-accent);
+  color: #0e110d;
+}
+
+#spl-quiz-root button.sl-btn-primary:hover, #spl-quiz-edit-root button.sl-btn-primary:hover {
+  background: var(--sl-accent-hover);
+  border-color: var(--sl-accent-hover);
+}
+
+#spl-quiz-root button.sl-btn:disabled, #spl-quiz-edit-root button.sl-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+#spl-quiz-root .sl-msg, #spl-quiz-edit-root .sl-msg {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  display: none;
+}
+
+#spl-quiz-root .sl-msg.visible, #spl-quiz-edit-root .sl-msg.visible {
+  display: block;
+}
+
+#spl-quiz-root .sl-msg-ok, #spl-quiz-edit-root .sl-msg-ok {
+  border: 1px solid #2d5038;
+  background: var(--sl-ok-bg);
+  color: var(--sl-ok);
+}
+
+#spl-quiz-root .sl-msg-ng, #spl-quiz-edit-root .sl-msg-ng {
+  border: 1px solid #5c3838;
+  background: var(--sl-ng-bg);
+  color: var(--sl-ng);
+}
+
+#spl-quiz-root .sl-msg-info, #spl-quiz-edit-root .sl-msg-info {
+  border: 1px solid var(--sl-border);
+  background: #1e2228;
+  color: var(--sl-text);
+}
+
+#spl-quiz-root .sl-hint, #spl-quiz-edit-root .sl-hint {
+  display: none;
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  border: 1px dashed var(--sl-border);
+  border-radius: 8px;
+  background: #1e2228;
+}
+
+#spl-quiz-root .sl-hint.visible, #spl-quiz-edit-root .sl-hint.visible {
+  display: block;
+}
+
+#spl-quiz-root .sl-table-wrap, #spl-quiz-edit-root .sl-table-wrap {
+  overflow: auto;
+  max-height: 420px;
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+#spl-quiz-root .sl-table-wrap table, #spl-quiz-edit-root .sl-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+#spl-quiz-root .sl-table-wrap th, #spl-quiz-edit-root .sl-table-wrap th,
+#spl-quiz-root .sl-table-wrap td, #spl-quiz-edit-root .sl-table-wrap td {
+  border-bottom: 1px solid #353b45;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+#spl-quiz-root .sl-table-wrap th, #spl-quiz-edit-root .sl-table-wrap th {
+  background: #2a2f36;
+  font-weight: 600;
+  color: var(--sl-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+#spl-quiz-root .sl-table-wrap.sl-log-raw table, #spl-quiz-edit-root .sl-table-wrap.sl-log-raw table {
+  table-layout: fixed;
+}
+
+#spl-quiz-root .sl-empty, #spl-quiz-edit-root .sl-empty {
+  font-size: 0.875rem;
+  color: var(--sl-muted);
+  margin: 0.5rem 0 0;
+}
+
+#spl-quiz-root .sl-spinner, #spl-quiz-edit-root .sl-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #3d4450;
+  border-top-color: var(--sl-accent);
+  border-radius: 50%;
+  animation: sl-spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 0.35rem;
+}
+
+@keyframes sl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#spl-quiz-root .sl-input, #spl-quiz-edit-root .sl-input,
+#spl-quiz-root .sl-textarea, #spl-quiz-edit-root .sl-textarea {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: #1e2228;
+  color: var(--sl-text);
+}
+
+#spl-quiz-root .sl-textarea, #spl-quiz-edit-root .sl-textarea {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+#spl-quiz-root button.sl-btn-sm, #spl-quiz-edit-root button.sl-btn-sm {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.8125rem;
+}
+
+#spl-quiz-root button.sl-btn-danger, #spl-quiz-edit-root button.sl-btn-danger {
+  border-color: #5c3838;
+  color: var(--sl-ng);
+  background: #251818;
+}
+
+#spl-quiz-root button.sl-btn-danger:hover, #spl-quiz-edit-root button.sl-btn-danger:hover {
+  border-color: #704040;
+  background: #2a1c1c;
+}
+
+#spl-quiz-root .sl-file-label, #spl-quiz-edit-root .sl-file-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  margin: 0;
+}
+
+#spl-quiz-root .sl-file-label input[type="file"], #spl-quiz-edit-root .sl-file-label input[type="file"] {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+/* Bulk import: hide real file input; open via #sl-editor-import-btn click */
+#spl-quiz-root .sl-editor-import-file-input,
+#spl-quiz-edit-root .sl-editor-import-file-input {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+#spl-quiz-root .sl-modal, #spl-quiz-edit-root .sl-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+#spl-quiz-root .sl-modal.visible, #spl-quiz-edit-root .sl-modal.visible {
+  display: flex;
+}
+
+#spl-quiz-root .sl-modal-backdrop, #spl-quiz-edit-root .sl-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+#spl-quiz-root .sl-modal-dialog, #spl-quiz-edit-root .sl-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+  max-height: min(92vh, 900px);
+  display: flex;
+  flex-direction: column;
+  background: var(--sl-surface);
+  border-radius: 12px;
+  border: 1px solid var(--sl-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+#spl-quiz-root .sl-modal-head, #spl-quiz-edit-root .sl-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--sl-border);
+  background: linear-gradient(180deg, #2c3138 0%, #252a31 100%);
+}
+
+#spl-quiz-root .sl-modal-body, #spl-quiz-edit-root .sl-modal-body {
+  padding: 1rem;
+  overflow: auto;
+}
+
+#spl-quiz-root .sl-modal-note, #spl-quiz-edit-root .sl-modal-note {
+  font-size: 0.8125rem;
+  color: var(--sl-muted);
+  margin: 0 0 1rem;
+  line-height: 1.55;
+}
+
+#spl-quiz-root .sl-modal-note code, #spl-quiz-edit-root .sl-modal-note code {
+  font-size: 0.85em;
+  background: var(--sl-code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+#spl-quiz-root .sl-field-help, #spl-quiz-edit-root .sl-field-help {
+  font-size: 0.75rem;
+  color: var(--sl-muted);
+  margin: 0 0 0.4rem;
+  line-height: 1.45;
+}
+
+#spl-quiz-root .sl-editor-toolbar, #spl-quiz-edit-root .sl-editor-toolbar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+#spl-quiz-root .sl-editor-list, #spl-quiz-edit-root .sl-editor-list {
+  margin-bottom: 1rem;
+}
+
+#spl-quiz-root .sl-editor-form, #spl-quiz-edit-root .sl-editor-form {
+  display: none;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sl-border);
+}
+
+#spl-quiz-root .sl-editor-form.visible, #spl-quiz-edit-root .sl-editor-form.visible {
+  display: block;
+}
+
+#spl-quiz-root .sl-editor-form-title, #spl-quiz-edit-root .sl-editor-form-title {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  font-size: 0.9375rem;
+}
+
+#spl-quiz-root .sl-editor-form-err, #spl-quiz-edit-root .sl-editor-form-err {
+  color: var(--sl-ng);
+  font-size: 0.8125rem;
+  margin: 0.5rem 0 0;
+  min-height: 1.25rem;
+}
+
+#spl-quiz-root .sl-editor-form-actions, #spl-quiz-edit-root .sl-editor-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}

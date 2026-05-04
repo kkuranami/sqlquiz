@@ -1,0 +1,7 @@
+<nav search_bar="false">
+  <!-- Default landing: sample. Titles come from each view XML <label> (may be cached). -->
+  <view name="spl_quiz_sample" default="true"/>
+  <!-- Fixed labels for user quiz and editor (some builds cache old nav text). -->
+  <a href="/app/spl_quiz/spl_quiz">SPL Quiz (user problems)</a>
+  <a href="/app/spl_quiz/spl_quiz_edit">Edit problems</a>
+</nav>

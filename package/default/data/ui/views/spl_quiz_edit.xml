@@ -1,0 +1,13 @@
+<dashboard version="1.1" script="spl_quiz_ui.js" stylesheet="spl_quiz.css">
+  <label>Edit problems</label>
+  <description>SPL Quiz — edit user problems</description>
+  <row>
+    <panel>
+      <html>
+        <div id="spl-quiz-edit-root" class="spl-quiz-edit-root" style="min-height:280px;overflow:visible;">
+          <p class="spl-quiz-js-loading">Preparing the page…</p>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

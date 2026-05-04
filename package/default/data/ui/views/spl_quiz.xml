@@ -1,0 +1,13 @@
+<dashboard version="1.1" script="spl_quiz_ui.js" stylesheet="spl_quiz.css">
+  <label>SPL Quiz (user problems)</label>
+  <description>SPL Quiz — user-created problems</description>
+  <row>
+    <panel>
+      <html>
+        <div id="spl-quiz-root" class="spl-quiz-exercise spl-quiz-exercise-user" data-spl-quiz-mode="user" style="min-height:65vh;overflow:visible;">
+          <p class="spl-quiz-js-loading">Preparing the page…</p>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>
