@@ -1,5 +1,5 @@
 []
-access = read : [ * ], write : [ admin, power, user ]
+access = read : [ * ], write : [ admin, power ]
 
 [transforms]
 export = system
