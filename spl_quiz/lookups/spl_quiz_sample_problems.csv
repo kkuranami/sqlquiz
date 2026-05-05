@@ -1,12 +1,12 @@
 id,category,title,indexName,statement,hint,placeholder,logPreviewSpl,referenceSpl
 b1,Beginner,5xx event count (stats),tutorial_b1,Count events whose HTTP status is in the 5xx range. Use status filtering and stats count. Return exactly one row.,"Filter to 5xx with status>=500, then stats count.","index=tutorial_b1
-(filter to 5xx, then count)",| sort 0 _time | head 100,status>=500 | stats count
+(filter to 5xx, then count)",| sort 0 _time | head 100,| status>=500 | stats count
 b2,Beginner,Distinct clientip count (dedup),tutorial_b2,Count how many distinct clientip values appear. Use dedup and stats count (or stats dc(clientip)). Return exactly one row.,"After dedup clientip, stats count; or stats dc(clientip).","index=tutorial_b2
 (count distinct clientip)",| sort 0 _time | head 100,| dedup clientip | stats count
 b3,Beginner,Top 3 status by frequency (top),tutorial_b3,Show the three status values with the highest counts. Use top.,top 3 status returns the top three by count.,"index=tutorial_b3
 (top 3 statuses by count)",| sort 0 _time | head 100,| top 3 status
 m1,Intermediate,5xx counts over time (timechart),tutorial_m1,Plot 5xx counts in one-hour buckets over time. Use timechart with span=1h. Expect multiple rows (one per hour).,"Filter 5xx with status>=500, then timechart span=1h count.","index=tutorial_m1
-(5xx per hour)",| sort 0 _time | head 100,status>=500 | timechart span=1h count
+(5xx per hour)",| sort 0 _time | head 100,| status>=500 | timechart span=1h count
 m2,Intermediate,Session count (transaction),tutorial_m2,"Extract session_id from Cookie and count how many sessions there are. Use transaction and stats count. Return exactly one row.<br><br><div class=""sl-extract-sample"" role=""note""><span class=""sl-extract-sample-label""><strong>Field extraction sample</strong>:</span> <span class=""sl-extract-sample-text"">rex to extract session_id from cookie:</span> <span class=""sl-mono-spl"">rex field=cookie ""session_id=(?&lt;session_id&gt;[^;\s]+)""</span></div>","After rex pulls session_id, group with transaction by session_id, then stats count.","index=tutorial_m2
 (extract session_id, transaction, count)",| sort 0 _time | head 100,"| rex field=cookie ""session_id=(?<session_id>[^;\s]+)"" | sort _time | transaction session_id | stats count"
 m3,Intermediate,Geo counts (geostats),tutorial_m3,"Extract lat and lon from URI, then aggregate counts with geostats. Use rex and geostats. For geostats count, specify only latfield and longfield.<br><br><div class=""sl-extract-sample"" role=""note""><span class=""sl-extract-sample-label""><strong>Field extraction sample</strong>:</span> <span class=""sl-extract-sample-text"">rex to extract lat/lon from uri:</span> <span class=""sl-mono-spl"">rex field=uri ""lat=(?&lt;lat&gt;[0-9.]+)&amp;lon=(?&lt;lon&gt;[0-9.]+)""</span></div>","rex lat/lon, then geostats count latfield=lat longfield=lon.","index=tutorial_m3
