@@ -3294,7 +3294,7 @@ require(["jquery"], function ($) {
       sl("#sl-ef-statement").val("");
       sl("#sl-ef-hint").val("");
       sl("#sl-ef-placeholder").val("");
-      sl("#sl-ef-logprev").val("| sort 0 _time | head 100");
+      sl("#sl-ef-logprev").val("| sort - _time | head 100");
       sl("#sl-ef-reference").val("");
       sl("#sl-editor-form-err").text("");
       sl("#sl-editor-form").addClass("visible");
