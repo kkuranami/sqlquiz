@@ -1,3 +1,3 @@
 id,category,title,indexName,statement,hint,placeholder,logPreviewSpl,referenceSpl
-b1,Beginner,5xx event count,tutorial_b1,"Count events whose HTTP status is in the 5xx range. Use status filtering and stats count. Return exactly one row.","Filter to 5xx with status>=500, then stats count.","index=tutorial_b1
-(filter to 5xx, then count)",| sort 0 _time | head 100,status>=500 | stats count
+s1,Sample,"latest event",main,"Search all events and retrieve only the single most recent event.","Use the head command to retrieve only the single most recent event.","index=main
+(retrieve the most recent event)","| sort 0 _time | head 100","| head 1"

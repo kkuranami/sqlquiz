@@ -5,7 +5,7 @@ require(["jquery"], function ($) {
   "use strict";
 
   var SPL_QUIZ_APP_ID = "spl_quiz";
-  var SPL_QUIZ_BUNDLE = "0.1.0";
+  var SPL_QUIZ_BUNDLE = "0.1.1";
   /** transforms.conf user lookup name (CSV basename) */
   var SPL_QUIZ_LOOKUP_USER = "spl_quiz_user_problems";
   /** Sample-problems lookup (same wide CSV columns as SPL_QUIZ_LOOKUP_USER) */
@@ -29,17 +29,16 @@ require(["jquery"], function ($) {
     "referenceSpl",
   ];
 
-  /** Placeholder sample for edit form (same as lookup row b1) */
+  /** Placeholder sample for edit form (matches shipped spl_quiz_user_problems.csv row s1) */
   var EDITOR_FORM_SAMPLE_B1 = {
-    id: "b1",
-    category: "Beginner",
-    title: "5xx event count",
-    indexName: "tutorial_b1",
-    statement:
-      "Count events whose HTTP status is in the 5xx range. Use status filtering and stats count. Return exactly one row.",
-    hint: "Filter to 5xx with status>=500, then stats count.",
-    placeholder: "index=tutorial_b1\n(filter to 5xx, then count)",
-    referenceSpl: "status>=500 | stats count",
+    id: "s1",
+    category: "Sample",
+    title: "latest event",
+    indexName: "main",
+    statement: "Search all events and retrieve only the single most recent event.",
+    hint: "Use the head command to retrieve only the single most recent event.",
+    placeholder: "index=main\n(retrieve the most recent event)",
+    referenceSpl: "| head 1",
   };
 
   /** Always-on console diagnostic line (one JSON line, easy to correlate with Network) */
@@ -2240,6 +2239,30 @@ require(["jquery"], function ($) {
       .replace(/\f/g, "\\f");
   }
 
+  /**
+   * Splunk SPL string literals do not universally treat "\n" as a newline escape in all contexts.
+   * For multiline lookup fields persisted via embedded eval(case(...)), build:
+   *   "line1"."\n"."line2"
+   * using splunk's string concatenation operator "." (not Javascript +).
+   */
+  function splEvalConcatQuotedLines(s) {
+    var txt = String(s != null ? s : "");
+    if (/\r/.test(txt)) {
+      txt = txt.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    }
+    var parts = txt.split("\n");
+    var out = "";
+    var pi;
+    for (pi = 0; pi < parts.length; pi++) {
+      if (pi > 0) {
+        /* Keep newlines explicit for Splunk */
+        out += '."\n".';
+      }
+      out += '"' + splEvalStringForSpl(parts[pi]) + '"';
+    }
+    return out;
+  }
+
   /** RFC4180-ish: split CSV text into rows handling quotes/newlines */
   function parseCsvRows(text) {
     var t = String(text || "").replace(/^\uFEFF/, "");
@@ -2481,7 +2504,10 @@ require(["jquery"], function ($) {
         if (v === undefined || v === null) {
           v = "";
         }
-        caseParts.push("seq==" + (i + 1) + ',"' + splEvalStringForSpl(String(v)) + '"');
+        var lit = /\n|\r/.test(String(v))
+          ? splEvalConcatQuotedLines(String(v))
+          : '"' + splEvalStringForSpl(String(v)) + '"';
+        caseParts.push("seq==" + (i + 1) + "," + lit);
       }
       caseParts.push('true(),""');
       parts.push("| eval " + fn + "=case(" + caseParts.join(", ") + ")");
@@ -2604,7 +2630,7 @@ require(["jquery"], function ($) {
           htmlPlaceholderAttr(EDITOR_FORM_SAMPLE_B1.hint) +
           '"></textarea></div>',
         '<div class="sl-field"><label for="sl-ef-reference">Reference SPL (for grading)</label>',
-        '<p class="sl-field-help">SPL used to compare the user submission with the expected answer.</p>',
+        '<p class="sl-field-help">Pipeline fragment appended after the problem index base search (search earliest=0 latest=now index="…"). Do not repeat index=… here. Example: | head 1</p>',
         '<textarea id="sl-ef-reference" class="sl-textarea" rows="3" spellcheck="false" placeholder="' +
           htmlPlaceholderAttr(EDITOR_FORM_SAMPLE_B1.referenceSpl) +
           '"></textarea></div>',
@@ -2801,7 +2827,7 @@ require(["jquery"], function ($) {
               msg =
                 "Log is empty. Check that index=" +
                 (p.indexName || "") +
-                " has tutorial data and that your role can search those indexes.";
+                " has matching events for the app's log preview time range (<code>earliest=0 latest=now</code>) and that your Splunk role is allowed to search that index.";
             }
           }
           showStatus("ng", msg);
@@ -3567,7 +3593,7 @@ require(["jquery"], function ($) {
             message =
               state.quizExerciseMode === "sample"
                 ? "Cannot grade: reference search returned 0 rows. Check lookup spl_quiz_sample_events and virtual_index."
-                : "Cannot grade: reference search returned 0 rows. Check that the index has tutorial data.";
+                : 'Cannot grade: reference search returned 0 rows. Check the problem "Index", verify "Reference SPL" is valid SPL for that index, and that events exist (<code>earliest=0 latest=now</code>).';
           } else if (nu.length === 0) {
             message = "Incorrect (your result has 0 rows).";
           } else if (bothSingleRowCountZero(nu, nr)) {
